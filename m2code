@@ -1,0 +1,116 @@
+/*
+ * M2.c
+ *Project's Description:
+ *Pin Match:
+	Input:
+	Output:
+ * Created: 25/11/2017 4:17:44 μμ
+ * Author : Doras Konstantinos && Chariton Palaiologk 
+ */ 
+
+#define F_CPU 16000000 // define the cpu frequency
+
+#include <avr/io.h> //I/O Avr library
+#include <avr/interrupt.h> //Interrupt Avr library
+
+// function declaration
+
+void initial(); //Initialization.
+void setupADC(); //Initialization of ADC.
+void startADC(); //Start Conversion	of analog input to digital.
+void detectColors(); //Detect colors based on the ADC values.
+void WDT_ON();// Enable the Watchdog timer. 
+void WDT_OFF();// Disable the watchdog timer.
+
+int ADCValue; // ADC value Assignment.
+
+int main(void)
+{
+	//WDT_ON();
+    initial();
+    setupADC();
+    sei();
+    while (1) 
+    {
+	}
+}
+
+void initial()
+{
+	DDRD = 255; // Setting all the ports as outputs.
+	DDRB=4;
+	PORTB=4;
+	PORTD=1;//PD1->1 Using PD1 as Vin for our sensor 
+	// M3
+	TCCR0 = (1<< COM01) | (0<<COM00) | (1<<WGM00) | (1<<WGM01) | (1<<CS00); //http://prntscr.com/hef4ls  http://prntscr.com/hef5e7
+	DDRB|=(1<<PB3);  //set OC0 pin as output 
+	TIMSK= (1<<TOIE0);
+}
+
+void setupADC()
+{
+	ADMUX = (0 << REFS1) | (1 << REFS0)  |  (0 << MUX0)  |  (0 << MUX1) |  (0 << MUX2) |  (0 << MUX3) | ( 0 << MUX4);//Set PA0 as ADC pin (For MUX values) , set reference voltage the Vcc of our MCU (REFS) : datasheet screenshots http://prntscr.com/heddod  http://prntscr.com/hedglz
+	ADCSRA = (1 << ADEN) | (1 << ADIE) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0); //ADEN -> ADC enable , ADIE -> interrupt enable of adc , ADPS -> ADC prescaler (division F_CPU/(ADPS value),in this case 16000000/128=125000 Hz) : datasheet screenshots  http://prntscr.com/hedt1t  http://prntscr.com/hedtkk  http://prntscr.com/hedune
+	startADC();
+}
+
+void startADC()
+{
+	ADCSRA |= (1<< ADSC); //Start the ADC conversion http://prntscr.com/hedt1t   https://prnt.sc/hedxkz
+}
+
+void detectColors()
+{
+	//Analog voltage input conversion to ADC's 10 bit register  https://prnt.sc/hgtfac
+	if(ADC >= 273 && ADC<=313 )
+	{
+		PORTD=9; //Red ADC value as measured and converted into 10 bit ADC resolution 293 
+				//Calculation Vldr*1024/5,24 , Vldr for red is 1.52 Volt approx.
+	}
+	else if(ADC>=308 && ADC<=348)
+	{
+		PORTD=5; //Green ADC value as measured and converted into 10 bit ADC resolution 328 
+				//Calculation Vldr*1024/5,24 , Vldr for red is 1.7 Volt approx.
+	}
+	else if(ADC>=107 && ADC<=147)
+	{
+		PORTD=17; //Blue ADC value as measured and converted into 10 bit ADC resolution 117 
+				  //Calculation Vldr*1024/5,24 , Vldr for red is 0.62 Volt approx.
+	}
+	else if(ADC>=382 && ADC<=422)
+	{
+		PORTD=3; //Yellow ADC value as measured and converted into 10 bit ADC resolution 402 
+				 //Calculation Vldr*1024/5,24 , Vldr for red is 2.11 Volt approx.
+	}				
+	else
+	{
+		PORTD=1; //For Every other value of ADC we turn off the Leds.
+	}
+}
+
+void WDT_ON()
+{
+	WDTCR = (1<<WDE)|(1<<WDP2)|(1<<WDP1)|(1<<WDP0); //Watchdog timer enables with typical timeout period 2.1 sec  https://prnt.sc/hgtpe0
+	
+}
+
+void WDT_OFF()
+{
+
+	WDTCR = (1<<WDTOE)|(1<<WDE); //  Write logical one to WDTOE and WDE https://prnt.sc/hgtoqz
+	WDTCR = 0; // Turn off WDT 
+}
+//M3
+ISR(TIMER0_OVF_vect)
+{
+	OCR0=20;
+} 
+
+ISR(ADC_vect)
+{
+	ADCValue=ADC; // Setting the ADC value to ADCValue variable
+	startADC(); 
+	//WDT_OFF(); 
+	detectColors();
+}
+
