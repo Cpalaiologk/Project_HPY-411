@@ -1,21 +1,52 @@
-
 /*
- * M2.c
- *Project's Description:
+ * M3.c
+ *Project's Description: In this project we use an ATMEGA16 MCU to achieve color detection of red,blue,green and yellow using a LDR-based sensor.
+ The detection is based on the sensor's output voltage (Vout) (input to our ADC) which differs from color to color. After reading the Vout of every color
+ and converting it to a 10bit representation, we matched our calculations (with a deviation of +-20) with each color. Finally we used a RGB LED, a yellow LED 
+ and a piezoelectric as outputs, turning them, on the corresponding color, on in every case (blue and green in the case of yellow) by setting the PORTDx to 1 
+ (for the LEDs) and  adjusting the duty cycle on PORTB3 using the fast PWM mode (for sound generation), in the case of "no color" the  LED stays turned off
+ and the duty cycle is set to 0.
+ *NOTES: The whole project is done using interrupts and our own functions only. 
+		 Implementation was changed after discussion with professor A.Dollas, 2 white LEDs were added in order to achieve more realistic system with random 
+		 not glowing objects.
  *Pin Match:
-	Input:
-	Output:
- * Created: 25/11/2017 4:17:44 μμ
- * Author : Doras Konstantinos && Chariton Palaiologk 
- */ 
+	Input: PA0 (ADC mode), PC1 (Switch button)
+	Output: PD0 (Vin for our sensor), PD1 (set to 1 if yellow color detected), PD2 (set to 1 if blue color detected), PD3 (set to 1 if red color detected),
+	PD4 (set to 1 if green color detected), PC0 (set to 1 if Switch button0 is pressed), PB3 (Fast PWM mode)
+ *                                                          --------------
+							   |      \/      |PA0 = 0 - 5,24V (ADC) 
+                                                           |              |
+                                                           |              |
+                 PB3 = Fast PWM mode (for sound generation)|              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                        VCC|              |
+                                                        GND|              |
+                                                           |              |
+                                                           |              |
+                                    PD0=1 (Vin for the LDR)|              |
+                            PD1=1 If yellow detected else 0|              |
+                              PD2=1 If blue detected else 0|              |
+                               PD3=1 If red detected else 0|              |
+                             PD4=1 If green detected else 0|              |PC0=1 if SW0==1 (Vin for the white LEDs)
+                                                           |              |PC1=SW0
+                                                           |              |
+                                                            --------------
+ 
+ * Created: 25/11/2017 4:17:44 ??
+ * Authors : Doras Konstantinos && Chariton Palaiologk 
+*/
 
 #define F_CPU 16000000 // define the cpu frequency
 
 
 #include <avr/io.h> //I/O Avr library
 #include <avr/interrupt.h> //Interrupt Avr library
-#include <math.h>
-#include <stdio.h>
+#include <math.h> //Math Operation library
+#include <stdio.h> //
 // function declaration
 
 void initial(); //Initialization.
@@ -30,7 +61,7 @@ int main(void)
 {
 	
     initial();
-	timer_interrupt();
+    timer_interrupt();
     setupADC();
     sei();
     while (1) 
@@ -43,26 +74,29 @@ void initial()
 	DDRD = 255; // Setting all the ports as outputs.
 	PORTD=1;//PD1->1 Using PD1 as Vin for our sensor
 	
-	DDRB=4;
-	PORTB=4;
-	DDRC=1;
-	PORTC=1;
+	DDRB=4; //setting PB3 as output
+	PORTB=4; //PB3->1 Using PB3 as waveform generation output pin
+	DDRC=1; //setting PC0 as output
+	PORTC=1; //PC0->1 Using PC0 as Vin for the white LEDs
 	
 }
 
 void timer_interrupt()
 {
-	TCCR0 = (1<< COM01) | (0<<COM00) | (1<<WGM00) | (1<<WGM01) | (1<<CS00); //http://prntscr.com/hef4ls  http://prntscr.com/hef5e7
+	TCCR0 = (1<< COM01) | (0<<COM00) | (1<<WGM00) | (1<<WGM01) | (1<<CS00); //Clear OC0 on compare match, fast PWM mode selected, no prescalling
+	//http://prntscr.com/hef4ls  http://prntscr.com/hef5e7
 	DDRB|=(1<<PB3);  //set OC0 pin as output
-	TIMSK= (1<<TOIE0);
+	TIMSK= (1<<TOIE0); //Timer Counter0 Overflow interrupt enable
 }
 
 
 
 void setupADC()
 {
-	ADMUX = (0 << REFS1) | (1 << REFS0)  |  (0 << MUX0)  |  (0 << MUX1) |  (0 << MUX2) |  (0 << MUX3) | ( 0 << MUX4);//Set PA0 as ADC pin (For MUX values) , set reference voltage the Vcc of our MCU (REFS) : datasheet screenshots http://prntscr.com/heddod  http://prntscr.com/hedglz
-	ADCSRA = (1 << ADEN) | (1 << ADIE) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0); //ADEN -> ADC enable , ADIE -> interrupt enable of adc , ADPS -> ADC prescaler (division F_CPU/(ADPS value),in this case 16000000/128=125000 Hz) : datasheet screenshots  http://prntscr.com/hedt1t  http://prntscr.com/hedtkk  http://prntscr.com/hedune
+	ADMUX = (0 << REFS1) | (1 << REFS0)  |  (0 << MUX0)  |  (0 << MUX1) |  (0 << MUX2) |  (0 << MUX3) | ( 0 << MUX4);//Set PA0 as ADC pin (For MUX values),
+	//set reference voltage the Vcc of our MCU (REFS) : datasheet screenshots http://prntscr.com/heddod  http://prntscr.com/hedglz
+	ADCSRA = (1 << ADEN) | (1 << ADIE) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0); //ADEN -> ADC enable , ADIE -> interrupt enable of adc,
+	//ADPS -> ADC prescaler (division F_CPU/(ADPS value),in this case 16000000/128=125000 Hz) : datasheet screenshots  http://prntscr.com/hedt1t  http://prntscr.com/hedtkk  http://prntscr.com/hedune
 	startADC();
 }
 
@@ -74,57 +108,57 @@ void startADC()
 int detectColors()
 {
 	//Analog voltage input conversion to ADC's 10 bit register  https://prnt.sc/hgtfac
-	int value=0;
+	int value=0; //Value of the duty cycle for the sound generation will be assigned later on to OCR0
 	
-		if(ADC >= 500 && ADC<= 540 )
+		if(ADC >= 500 && ADC<= 550 )
 		{
-			PORTD=9; //Red ADC value as measured and converted into 10 bit ADC resolution 293
-			//Calculation Vldr*1024/5,24 , Vldr for red is 1.52 Volt approx.
+			PORTD=9; //Red ADC value as measured and converted into 10 bit ADC resolution 540
+			//Calculation Vldr*1024/5,24 , Vldr for red is 2.76 Volt approx.
 			PORTB=4;
-			value=40;
+			value=40; //Value of the duty cycle for the sound generation
 		}
 
-		 if(ADC>=343 && ADC<=383)
+		 if(ADC>=343 && ADC<=390)
 		{
-			PORTD=17; //Blue ADC value as measured and converted into 10 bit ADC resolution 117
-			//Calculation Vldr*1024/5,24 , Vldr for red is 0.62 Volt approx.
+			PORTD=17; //Blue ADC value as measured and converted into 10 bit ADC resolution 375
+			//Calculation Vldr*1024/5,24 , Vldr for blue is 1.92 Volt approx.
 			PORTB=4;
-			value=168;
+			value=140; //Value of the duty cycle for the sound generation
 		}
-		 if(ADC>=607 && ADC<=647) 
+		 if(ADC>=607 && ADC<=660) 
 		{
-			PORTD=5; //Green ADC value as measured and converted into 10 bit ADC resolution 328
-			//Calculation Vldr*1024/5,24 , Vldr for red is 1.7 Volt approx.
+			PORTD=5; //Green ADC value as measured and converted into 10 bit ADC resolution 640
+			//Calculation Vldr*1024/5,24 , Vldr for red is 3.3 Volt approx.
 				
 			PORTB=4;
-			value=84;
+			value=90; //Value of the duty cycle for the sound generation
 		}
-		 if(ADC>=680 && ADC<=715) 
+		 if(ADC>=680 && ADC<=725) 
 		{
-			PORTD=3; //Yellow ADC value as measured and converted into 10 bit ADC resolution 402
-			//Calculation Vldr*1024/5,24 , Vldr for red is 2.11 Volt approx.
+			PORTD=3; //Yellow ADC value as measured and converted into 10 bit ADC resolution 700
+			//Calculation Vldr*1024/5,24 , Vldr for red is 3.65 Volt approx.
 			PORTB=4;
-			value=230;
+			value=230; //Value of the duty cycle for the sound generation
 		}
 		else
 		{
-		PORTD=1;
-		PORTB=0;
+		PORTD=1; //turn off LEDs
+		PORTB=0; //Stop sound generation
 		}
 	
 				
 
-	return value;
+	return value; //return the value to the OCR0 for the duty cycle determination
 }
 
 
-ISR(TIMER0_OVF_vect)
+ISR(TIMER0_OVF_vect) //timer0 ovf handler, calls our color detecting function
 {
 		
 	OCR0=detectColors();
 } 
 
-ISR(ADC_vect)
+ISR(ADC_vect) //adc interrupt handler, starts again the AD conversion
 {
 	startADC(); 
 }
