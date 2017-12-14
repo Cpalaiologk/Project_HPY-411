@@ -1,16 +1,43 @@
 /*
  * M2.c
- *Project's Description:
+ *Project's Description: In this project we use an ATMEGA16 MCU to achieve color detection of red,blue,green and yellow using a LDR-based sensor.
+ The detection is based on the sensor's output voltage (Vout) (input to our ADC) which differs from color to color. After reading the Vout of every color
+ and converting it to a 10bit representation, we matched our calculations (with a deviation of +-20) with each color. Finally we used a RGB LED for output
+ turning on the corresponding color on it in every case (blue and green in the case of yellow) by setting the PORTDx to 1, in the case of "no color" the 
+ LED stays turned off.
+ *NOTES: The whole project is done using interrupts and our own functions only. 
+		 Watchdog timer implemented only for testing.
+		 Ignore comments starting with M3 as these blocks are for the next milestone.
  *Pin Match:
-	Input:
-	Output:
+	Input: PA0 (ADC mode)
+	Output: PD0 (Vin for our sensor), PD1 (set to 1 if xxx color detected), PD2 (set to 1 if xxx color detected), PD3 (set to 1 if xxx color detected),
+	PD4 (set to 1 if yellow color detected)
+ *                                                          --------------
+														   |      \/      |PA0 = 0 - 5,24V (ADC) 
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                PD0=1 (Vin)|              |
+                               PD1=1 If xxx detected else 0|              |
+                               PD2=1 If xxx detected else 0|              |
+                               PD3=1 If xxx detected else 0|              |
+                            PD4=1 If yellow detected else 0|              |
+                                                           |              |
+                                                           |              |
+                                                            --------------
+ 
  * Created: 25/11/2017 4:17:44 μμ
- * Author : Doras Konstantinos && Chariton Palaiologk 
+ * Authors : Doras Konstantinos && Chariton Palaiologk 
  */ 
 
 #define F_CPU 16000000 // define the cpu frequency
 
-#include <avr/io.h> //I/O Avr library
+#include <avr/io.h> // I/O Avr library
 #include <avr/interrupt.h> //Interrupt Avr library
 
 // function declaration
@@ -20,13 +47,13 @@ void setupADC(); //Initialization of ADC.
 void startADC(); //Start Conversion	of analog input to digital.
 void detectColors(); //Detect colors based on the ADC values.
 void WDT_ON();// Enable the Watchdog timer. 
-void WDT_OFF();// Disable the watchdog timer.
+void WDT_OFF;// Disable the watchdog timer.
 
 int ADCValue; // ADC value Assignment.
 
 int main(void)
 {
-	//WDT_ON();
+	WDT_ON();
     initial();
     setupADC();
     sei();
@@ -38,13 +65,11 @@ int main(void)
 void initial()
 {
 	DDRD = 255; // Setting all the ports as outputs.
-	DDRB=4;
-	PORTB=4;
 	PORTD=1;//PD1->1 Using PD1 as Vin for our sensor 
 	// M3
-	TCCR0 = (1<< COM01) | (0<<COM00) | (1<<WGM00) | (1<<WGM01) | (1<<CS00); //http://prntscr.com/hef4ls  http://prntscr.com/hef5e7
-	DDRB|=(1<<PB3);  //set OC0 pin as output 
-	TIMSK= (1<<TOIE0);
+	//TCCR0 = (1<< COM01) | (0<<COM00) | (1<<WGM00) | (1<<WGM01) | (1<<CS00); //http://prntscr.com/hef4ls  http://prntscr.com/hef5e7
+	//DDRB|=(1<<PB3);  //set OC0 pin as output 
+	//TIMSK= (1<<TOIE0);
 }
 
 void setupADC()
@@ -79,7 +104,7 @@ void detectColors()
 	}
 	else if(ADC>=382 && ADC<=422)
 	{
-		PORTD=3; //Yellow ADC value as measured and converted into 10 bit ADC resolution 402 
+		PORTD=21; //Yellow ADC value as measured and converted into 10 bit ADC resolution 402 
 				 //Calculation Vldr*1024/5,24 , Vldr for red is 2.11 Volt approx.
 	}				
 	else
@@ -101,16 +126,15 @@ void WDT_OFF()
 	WDTCR = 0; // Turn off WDT 
 }
 //M3
-ISR(TIMER0_OVF_vect)
+/*ISR(TIMER0_OVF_vect)
 {
-	OCR0=20;
-} 
+	OCR0=ADC;
+}*/ 
 
 ISR(ADC_vect)
 {
 	ADCValue=ADC; // Setting the ADC value to ADCValue variable
 	startADC(); 
-	//WDT_OFF(); 
+	WDT_OFF(); 
 	detectColors();
 }
-
