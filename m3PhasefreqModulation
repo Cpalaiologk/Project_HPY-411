@@ -1,12 +1,48 @@
 /*
- * M2.c
- *Project's Description:
+ * M3.c
+ *Project's Description: In this project we use an ATMEGA16 MCU to achieve color detection of red,blue,green and yellow using a LDR-based sensor.
+ The detection is based on the sensor's output voltage (Vout) (input to our ADC) which differs from color to color. After reading the Vout of every color
+ and converting it to a 10bit representation, we matched our calculations (with a deviation of +-20) with each color. Finally we used a RGB LED, a yellow LED 
+ and a piezoelectric as outputs, turning them on, on the corresponding color, in every case (blue and green in the case of yellow) by setting the PORTDx to 1 
+ (for the LEDs) and  adjusting the duty cycle on PORTB3 using the Phase and frequency modulation mode (for sound generation), in the case of "no color" the  LED stays turned off
+ and the duty cycle is set to 0.
+ *NOTES: The whole project is done using interrupts and our own functions only. 
+		 Implementation was changed after discussion with professor A.Dollas, 2 white LEDs were added in order to achieve more realistic system with random 
+		 not glowing objects.
+		 Basic differences with the other (Fast PWM) implementation are.
+		 -Switch button 0 added, now the detection and the white LED lighting starts only after pushing the SW0.
+		 -Timer/Counter1 (16-bit) used instead of Timer/Counter0 (8-bit).
+		 -Phase and frequency modulation instead of fast PWM.
  *Pin Match:
-	Input:
-	Output:
- * Created: 25/11/2017 4:17:44 μμ
- * Author : Doras Konstantinos && Chariton Palaiologk 
- */ 
+	Input: PA0 (ADC mode), PC1 (Switch button)
+	Output: PB0 (Vin for our sensor), PB1 (set to 1 if yellow color detected), PB2 (set to 1 if blue color detected), PB3 (set to 1 if red color detected),
+	PB4 (set to 1 if green color detected), PC0 (set to 1 if Switch button0 is pressed), PD4 (Phase and frequency modulation mode)
+ *                                                          --------------
+                                    PB0=1 (Vin for the LDR)|      \/      |PA0 = 0 - 5,24V (ADC) 
+                            PB1=1 If yellow detected else 0|              |
+                              PB2=1 If blue detected else 0|              |
+                               PB3=1 If red detected else 0|              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                        VCC|              |
+                                                        GND|              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+                                                           |              |
+				                           |              |
+                  PD4 = Phase and frequency modulation mode|              |PC1=SW0
+                                     (for sound generation)|              |PC0=1 if SW0==1 (Vin for the white LEDs)
+                                                           |              |
+                                                            --------------
+ 
+ * Created: 25/11/2017 4:17:44 ??
+ * Authors : Doras Konstantinos && Chariton Palaiologk 
+*/
 
 #define F_CPU 1000000 // define the cpu frequency
 
