@@ -115,7 +115,7 @@ void detectColors()
 		if(ADC >= 510 && ADC<= 530 )
 		{
 			OCR1B=100;
-			PORTB=9; //Red ADC value as measured and converted into 10 bit ADC resolution 293
+			PORTB=9; //Red ADC value as measured and converted into 10 bit ADC resolution 520
 			//Calculation Vldr*1024/5,24 , Vldr for red is 1.52 Volt approx.
 			value=392;
 			
@@ -124,7 +124,7 @@ void detectColors()
 		 if(ADC>=353 && ADC<=373)
 		{
 			OCR1B=100;
-			PORTB=17; //Blue ADC value as measured and converted into 10 bit ADC resolution 117
+			PORTB=17; //Blue ADC value as measured and converted into 10 bit ADC resolution 363
 			//Calculation Vldr*1024/5,24 , Vldr for red is 0.62 Volt approx.
 			value=466;
 		
@@ -132,7 +132,7 @@ void detectColors()
 		 if(ADC>=617 && ADC<=637) 
 		{
 			OCR1B=100;
-			PORTB=5; //Green ADC value as measured and converted into 10 bit ADC resolution 328
+			PORTB=5; //Green ADC value as measured and converted into 10 bit ADC resolution 627
 			//Calculation Vldr*1024/5,24 , Vldr for red is 1.7 Volt approx.
 			value=523;
 		
@@ -140,7 +140,7 @@ void detectColors()
 		 if(ADC>=685 && ADC<=705) 
 		{
 			OCR1B=100;
-			PORTB=3; //Yellow ADC value as measured and converted into 10 bit ADC resolution 402
+			PORTB=3; //Yellow ADC value as measured and converted into 10 bit ADC resolution 695
 			//Calculation Vldr*1024/5,24 , Vldr for red is 2.11 Volt approx.
 			value=554;
 			
