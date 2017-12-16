@@ -3,8 +3,8 @@
  *Project's Description: In this project we use an ATMEGA16 MCU to achieve color detection of red,blue,green and yellow using a LDR-based sensor.
  The detection is based on the sensor's output voltage (Vout) (input to our ADC) which differs from color to color. After reading the Vout of every color
  and converting it to a 10bit representation, we matched our calculations (with a deviation of +-20) with each color. Finally we used a RGB LED, a yellow LED 
- and a piezoelectric as outputs, turning them on, on the corresponding color, in every case (blue and green in the case of yellow) by setting the PORTDx to 1 
- (for the LEDs) and  adjusting the duty cycle on PORTB3 using the Phase and frequency modulation mode (for sound generation), in the case of "no color" the  LED stays turned off
+ and a piezoelectric as outputs, turning them on, on the corresponding color, in every case (blue and green in the case of yellow) by setting the PORTΒx to 1 
+ (for the LEDs) and  adjusting the duty cycle on PORTD4 using the Phase and frequency modulation mode (for sound generation), in the case of "no color" the  LED stays turned off
  and the duty cycle is set to 0.
  *NOTES: The whole project is done using interrupts and our own functions only. 
 		 Implementation was changed after discussion with professor A.Dollas, 2 white LEDs were added in order to achieve more realistic system with random 
