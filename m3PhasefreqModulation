@@ -20,9 +20,9 @@
  *                                                          --------------
                                     PB0=1 (Vin for the LDR)|      \/      |PA0 = 0 - 5,24V (ADC) 
                             PB1=1 If yellow detected else 0|              |
-                              PB2=1 If blue detected else 0|              |
+                             PB2=1 If green detected else 0|              |
                                PB3=1 If red detected else 0|              |
-                             PB4=1 If green detected else 0|              |
+                              PB4=1 If blue detected else 0|              |
                                                            |              |
                                                            |              |
                                                            |              |
