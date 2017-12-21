@@ -29,9 +29,9 @@
                                                            |              |
                                     PD0=1 (Vin for the LDR)|              |
                             PD1=1 If yellow detected else 0|              |
-                              PD2=1 If blue detected else 0|              |
+                             PD2=1 If green detected else 0|              |
                                PD3=1 If red detected else 0|              |
-                             PD4=1 If green detected else 0|              |PC0=1 if SW0==1 (Vin for the white LEDs)
+                              PD4=1 If blue detected else 0|              |PC0=1 if SW0==1 (Vin for the white LEDs)
                                                            |              |PC1=SW0
                                                            |              |
                                                             --------------
